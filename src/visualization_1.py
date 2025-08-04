@@ -74,12 +74,12 @@ def visualize_interaction_process(generation=0, learning_step=0):
     fig, axes = plt.subplots(1, 3, figsize=(12, 5))
     axes = axes.flatten()
 
-    axes[0].set_ylabel("Matched Share")
-    axes[0].set_xlabel("Game Round")
-    axes[1].set_ylabel("Payoff by Round")
-    axes[1].set_xlabel("Game Round")
+    axes[0].set_ylabel("Partnered Share")
+    axes[0].set_xlabel("Interaction Round")
+    axes[1].set_ylabel("Payoff per Round")
+    axes[1].set_xlabel("Interaction Round")
     axes[2].set_ylabel("Accumulated Payoff")
-    axes[2].set_xlabel("Game Round")
+    axes[2].set_xlabel("Interaction Round")
 
     # Create the plots using the custom palette
     line1 = sns.lineplot(data=visualization_df, x="game_round", y="matched_share", hue="behavior", 
@@ -117,6 +117,7 @@ def visualize_learning_process(generation=0):
     behaviors = ["alpha", "beta", "gamma", "delta"]
 
     for behavior in behaviors:
+        accumulated_payoff = 0
         for learning_step in range(15):
             total_ext = df.loc[(generation, learning_step, 0, "shares"), pd.IndexSlice["externalizing", :, :]].sum()
             total_non_ext = df.loc[(generation, learning_step, 0, "shares"), pd.IndexSlice["non-externalizing", :, :]].sum()
@@ -150,13 +151,15 @@ def visualize_learning_process(generation=0):
                 ].values
             ).sum()/df.loc[(generation, learning_step, 14, "shares"),
                                 pd.IndexSlice["non-externalizing", behavior, :]].sum()
+            accumulated_payoff += end_of_step_payoff
+
+            visualization_df.loc[len(visualization_df)] = [
+                learning_step, behavior, share, share_among_ext, share_among_non_ext, end_of_step_matched, accumulated_payoff
+            ]
+
             payoff_ext_df.loc[(learning_step, "externalizers")] += end_of_step_payoff*share_among_ext
             payoff_ext_df.loc[(learning_step, "non-externalizers")] += end_of_step_payoff*share_among_non_ext
 
-            visualization_df.loc[len(visualization_df)] = [
-                learning_step, behavior, share, share_among_ext, share_among_non_ext, end_of_step_matched, end_of_step_payoff
-            ]
-    
 
     sns.set_style("whitegrid")
     
@@ -185,11 +188,11 @@ def visualize_learning_process(generation=0):
     for ax in axes:
         ax.set_xlabel("Learning Step")
     axes[0].set_ylabel("Share of Population")
-    axes[1].set_ylabel("End of Step Matched Share")
-    axes[2].set_ylabel("Accumulated Payoff Step")
+    axes[1].set_ylabel("End of Step Partnered Share")
+    axes[2].set_ylabel("Accumulated Payoff")
     axes[3].set_ylabel("Share among Externalizers")
     axes[4].set_ylabel("Share among Non-Externalizers")
-    axes[5].set_ylabel("Accumulated Payoff Learning Process")
+    axes[5].set_ylabel("Accumulated Payoff")
 
     # Remove legends from individual plots
     for ax in axes:
