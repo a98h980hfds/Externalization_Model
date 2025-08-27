@@ -83,7 +83,7 @@ def visualize_robustness(filename):
     axes = axes.flatten()
 
     axes[0].set_ylabel("Number of Agents")
-    axes[0].set_xlabel("Learning Step of First Generation")
+    axes[0].set_xlabel("Learning Cycle")
     axes[1].set_ylabel("Number of Simulations")
     axes[1].set_xlabel("Final Externalizers")
 
@@ -93,7 +93,7 @@ def visualize_robustness(filename):
                         linestyle='--', palette=COLOR_DICT, markeredgewidth=0, ax=axes[0])
     sns.lineplot(data=learning_process_df, x="learning_step", y="2.5", hue="behavior",
                         linestyle='--', palette=COLOR_DICT, markeredgewidth=0, ax=axes[0])
-    sns.histplot(x=pd.Series(final_ext), stat="count", bins=20, ax=axes[1], color="gray", kde=True)
+    sns.histplot(x=pd.Series(final_ext), stat="count", bins=20, ax=axes[1], color="gray", kde=False)
 
     # Remove legends from individual plots
     for ax in axes:
@@ -129,17 +129,17 @@ def visualize_robustness(filename):
 if __name__ == "__main__":
     file_dir = os.path.dirname(os.path.realpath(__file__))
 
-    fig9 = visualize_robustness("ABM_base_simulation.csv")
+    fig6 = visualize_robustness("ABM_base_simulation.csv")
+    fig6.savefig(file_dir+"/../plots/fig6.png")
+
+    fig7 = visualize_robustness("ABM_mixed_learning_mechanism_simulation.csv")
+    fig7.savefig(file_dir+"/../plots/fig7.png")
+
+    fig8 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_HD.csv")
+    fig8.savefig(file_dir+"/../plots/fig8.png")
+
+    fig9 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_SH.csv")
     fig9.savefig(file_dir+"/../plots/fig9.png")
 
-    fig110 = visualize_robustness("ABM_mixed_learning_mechanism_simulation.csv")
-    fig110.savefig(file_dir+"/../plots/fig10.png")
-
-    fig11 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_HD.csv")
-    fig11.savefig(file_dir+"/../plots/fig11.png")
-
-    fig12 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_SH.csv")
-    fig12.savefig(file_dir+"/../plots/fig12.png")
-
-    fig13 = visualize_robustness("ABM_pop_size_12_simulation.csv")
-    fig13.savefig(file_dir+"/../plots/fig13.png")
+    fig10 = visualize_robustness("ABM_pop_size_12_simulation.csv")
+    fig10.savefig(file_dir+"/../plots/fig10.png")

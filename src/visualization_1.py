@@ -24,8 +24,9 @@ COLOR_DICT = {
     "externalizers": "darkblue",
     "non-externalizers": "purple"
 }
+BEHAVIORS = ["alpha", "delta", "beta", "gamma"]
 
-def read_data(csvpath="/../data/base_model_simulation.csv"):
+def read_data(csvpath):
     # Read the file
     file_dir = os.path.dirname(os.path.realpath(__file__))
     csv_file = file_dir+csvpath
@@ -43,12 +44,11 @@ def read_data(csvpath="/../data/base_model_simulation.csv"):
 
     return df
 
-def visualize_interaction_process(generation=0, learning_step=0):
-    df = read_data()
+def visualize_interaction_process(df, generation=0, learning_step=0):
+
     visualization_df = pd.DataFrame(columns=["game_round", "behavior", "matched_share", "payoff", "accumulated_payoff"])
-    behaviors = ["alpha", "delta", "beta", "gamma"]
     visibility_offset = {"alpha": 0.008, "beta": 0, "gamma": -0.004, "delta": 0.004}
-    for behavior in behaviors:
+    for behavior in BEHAVIORS:
         total = df.loc[(generation, learning_step, 0, "shares"), pd.IndexSlice[:, behavior, :]].sum()
         accumulated_payoff = 0
         for game_round in range(15):
@@ -75,11 +75,11 @@ def visualize_interaction_process(generation=0, learning_step=0):
     axes = axes.flatten()
 
     axes[0].set_ylabel("Partnered Share")
-    axes[0].set_xlabel("Interaction Round")
-    axes[1].set_ylabel("Payoff per Round")
-    axes[1].set_xlabel("Interaction Round")
+    axes[0].set_xlabel("Turn")
+    axes[1].set_ylabel("Payoff by Turn")
+    axes[1].set_xlabel("Turn")
     axes[2].set_ylabel("Accumulated Payoff")
-    axes[2].set_xlabel("Interaction Round")
+    axes[2].set_xlabel("Turn")
 
     # Create the plots using the custom palette
     line1 = sns.lineplot(data=visualization_df, x="game_round", y="matched_share", hue="behavior", 
@@ -91,7 +91,7 @@ def visualize_interaction_process(generation=0, learning_step=0):
 
     # After creating all three subplots
     handles, labels = axes[0].get_legend_handles_labels()  # Get the legend handles and labels from any of the axes
-    fig.legend(handles, labels, loc='lower left', bbox_to_anchor=(0.03, 0.0), ncol=2)
+    fig.legend(handles, labels, loc='lower left', bbox_to_anchor=(0.03, 0.0), ncol=4)
 
     # Remove the individual legends as you're already doing
     axes[0].get_legend().remove()
@@ -99,14 +99,13 @@ def visualize_interaction_process(generation=0, learning_step=0):
     axes[2].get_legend().remove()
 
     # Adjust the figure layout to make room for the legend at the bottom
-    fig.tight_layout(pad=3.0)
-    plt.subplots_adjust(bottom=0.3)  # Add space at the bottom for the legend
+    fig.tight_layout(pad=2.0)
+    plt.subplots_adjust(bottom=0.22)  # Add space at the bottom for the legend
 
     return fig
 
-def visualize_learning_process(generation=0):
-    df = read_data()
-
+def prepare_dfs_for_learning_process(df, generation=0):
+    
     payoff_ext_df = pd.DataFrame(columns=["learning_step", "ext_trait", "payoff_accumulated"])
     payoff_ext_df = payoff_ext_df.set_index(["learning_step","ext_trait"])
     for ext_trait in ["externalizers", "non-externalizers"]:
@@ -114,9 +113,8 @@ def visualize_learning_process(generation=0):
             payoff_ext_df.loc[(learning_step, ext_trait), "payoff_accumulated"] = 0
     
     visualization_df = pd.DataFrame(columns=["learning_step", "behavior", "share", "share_among_ext", "share_among_non_ext", "end_of_step_matched", "end_of_step_payoff"])
-    behaviors = ["alpha", "beta", "gamma", "delta"]
 
-    for behavior in behaviors:
+    for behavior in BEHAVIORS:
         accumulated_payoff = 0
         for learning_step in range(15):
             total_ext = df.loc[(generation, learning_step, 0, "shares"), pd.IndexSlice["externalizing", :, :]].sum()
@@ -159,40 +157,31 @@ def visualize_learning_process(generation=0):
 
             payoff_ext_df.loc[(learning_step, "externalizers")] += end_of_step_payoff*share_among_ext
             payoff_ext_df.loc[(learning_step, "non-externalizers")] += end_of_step_payoff*share_among_non_ext
+    return payoff_ext_df, visualization_df
+
+def visualize_learning_process(df, generation=0):
+    payoff_ext_df, visualization_df = prepare_dfs_for_learning_process(df, generation)
+
+    # Convert to wide format for stacked plots and reindex to match original behavior order
+    pivot_share_ext = visualization_df.pivot(index='learning_step', columns='behavior', values='share_among_ext')[BEHAVIORS]
+    pivot_share_non_ext = visualization_df.pivot(index='learning_step', columns='behavior', values='share_among_non_ext')[BEHAVIORS]
 
 
     sns.set_style("whitegrid")
     
-    fig, axes = plt.subplots(2, 3, figsize=(12, 9))
+    fig, axes = plt.subplots(1, 3, figsize=(12, 5))
     axes = axes.flatten()
 
     sns.lineplot(data=visualization_df, x="learning_step", y="share", hue="behavior", 
                         marker='o', ax=axes[0], palette=COLOR_DICT, markeredgewidth=0)
-    sns.lineplot(data=visualization_df, x="learning_step", y="end_of_step_matched", hue="behavior",
-                        marker='o', ax=axes[1], palette=COLOR_DICT, markeredgewidth=0)
-    sns.lineplot(data=visualization_df, x="learning_step", y="end_of_step_payoff", hue="behavior",
-                        marker='o', ax=axes[2], palette=COLOR_DICT, markeredgewidth=0)
-    
-    # Convert to wide format for stacked plots and reindex to match original behavior order
-    pivot_share_ext = visualization_df.pivot(index='learning_step', columns='behavior', values='share_among_ext')[behaviors]
-    pivot_share_non_ext = visualization_df.pivot(index='learning_step', columns='behavior', values='share_among_non_ext')[behaviors]
-
-    # Create stacked area plots for the first three charts
-    pivot_share_ext.plot.area(ax=axes[3], stacked=True, color=[COLOR_DICT[b] for b in behaviors], alpha=0.7)
-    pivot_share_non_ext.plot.area(ax=axes[4], stacked=True, color=[COLOR_DICT[b] for b in behaviors], alpha=0.7)
-    
-    payoff_ext_df = payoff_ext_df.reset_index()
-    sns.lineplot(data=payoff_ext_df, x="learning_step", y="payoff_accumulated", hue="ext_trait",
-                 marker="o", ax=axes[5], palette=COLOR_DICT, markeredgewidth=0)
+    pivot_share_ext.plot.area(ax=axes[1], stacked=True, color=[COLOR_DICT[b] for b in BEHAVIORS], alpha=0.7)
+    pivot_share_non_ext.plot.area(ax=axes[2], stacked=True, color=[COLOR_DICT[b] for b in BEHAVIORS], alpha=0.7)
 
     for ax in axes:
-        ax.set_xlabel("Learning Step")
+        ax.set_xlabel("Learning Cycle")
     axes[0].set_ylabel("Share of Population")
-    axes[1].set_ylabel("End of Step Partnered Share")
-    axes[2].set_ylabel("Accumulated Payoff")
-    axes[3].set_ylabel("Share among Externalizers")
-    axes[4].set_ylabel("Share among Non-Externalizers")
-    axes[5].set_ylabel("Accumulated Payoff")
+    axes[1].set_ylabel("Share among Externalizers")
+    axes[2].set_ylabel("Share among Non-Externalizers")
 
     # Remove legends from individual plots
     for ax in axes:
@@ -201,7 +190,7 @@ def visualize_learning_process(generation=0):
 
     # Create custom legend elements
     handles = []
-    for behavior in behaviors:
+    for behavior in BEHAVIORS:
         # Line marker for line plots
         line = Line2D([0], [0], color=COLOR_DICT[behavior], marker='o', linestyle='-', linewidth=2, markersize=6)
         # Patch for stacked area plots
@@ -209,6 +198,51 @@ def visualize_learning_process(generation=0):
         
         handles.append((line, behavior))
         handles.append((patch, behavior))
+
+    # Combine them into a single legend
+    fig.legend(
+        handles=[h[0] for h in handles], 
+        labels=[h[1] for h in handles],
+        ncol=4,
+        bbox_to_anchor=(0.6, 0.17)
+    )
+
+    fig.tight_layout(pad=3.0)
+    plt.subplots_adjust(bottom=0.28)
+
+    return fig
+
+def visualize_learning_process_explanation(df, generation=0):
+
+    payoff_ext_df, visualization_df = prepare_dfs_for_learning_process(df, generation)
+
+    fig, axes = plt.subplots(1, 3, figsize=(12, 5))
+
+    payoff_ext_df = payoff_ext_df.reset_index()
+    sns.lineplot(data=visualization_df, x="learning_step", y="end_of_step_matched", hue="behavior",
+                        marker='o', ax=axes[0], palette=COLOR_DICT, markeredgewidth=0)
+    sns.lineplot(data=visualization_df, x="learning_step", y="end_of_step_payoff", hue="behavior",
+                        marker='o', ax=axes[1], palette=COLOR_DICT, markeredgewidth=0)
+    sns.lineplot(data=payoff_ext_df, x="learning_step", y="payoff_accumulated", hue="ext_trait",
+                 marker="o", ax=axes[2], palette=COLOR_DICT, markeredgewidth=0)
+
+    for ax in axes:
+        ax.set_xlabel("Learning Cycle")
+    axes[0].set_ylabel("End of Step Partnered Share")
+    axes[1].set_ylabel("Accumulated Payoff")
+    axes[2].set_ylabel("Accumulated Payoff")
+
+    # Remove legends from individual plots
+    for ax in axes:
+        if hasattr(ax, 'get_legend') and ax.get_legend() is not None:
+            ax.get_legend().remove()
+
+    # Create custom legend elements
+    handles = []
+    for behavior in BEHAVIORS:
+        # Line marker for line plots
+        line = Line2D([0], [0], color=COLOR_DICT[behavior], marker='o', linestyle='-', linewidth=2, markersize=6)
+        handles.append((line, behavior))
     
     for ext_trait in ["externalizers", "non-externalizers"]:
         line = Line2D([0], [0], color=COLOR_DICT[ext_trait], marker='o', linestyle='-', linewidth=2, markersize=6)
@@ -218,41 +252,75 @@ def visualize_learning_process(generation=0):
     fig.legend(
         handles=[h[0] for h in handles], 
         labels=[h[1] for h in handles],
-        ncol=5,
-        bbox_to_anchor=(0.8, 0.125)
+        ncol=6,
+        bbox_to_anchor=(1, 0.125)
     )
 
     fig.tight_layout(pad=3.0)
-    plt.subplots_adjust(bottom=0.2)
+    plt.subplots_adjust(bottom=0.22)
 
     return fig
 
-def visualize_natural_selection_process():
-    df = read_data()
 
-    visualization_df = pd.DataFrame(columns=["generation", "ext_trait", "share"])
+def visualize_natural_selection_process(df):
+
+    payoff_ext_df, learn_df = prepare_dfs_for_learning_process(df, generation=10)
+
+    nat_df = pd.DataFrame(columns=["generation", "ext_trait", "share"])
     ext_traits = ["externalizing", "non-externalizing"]
 
     for ext in ext_traits:
         for generation in range(30):
             share = df.loc[(generation, 0, 0, "shares"), pd.IndexSlice[ext, :, :]].sum()
-            visualization_df.loc[len(visualization_df)] = [generation, ext.replace("ing", "ers"), share]
+            nat_df.loc[len(nat_df)] = [generation, ext.replace("ing", "ers"), share]
 
     sns.set_style("whitegrid")
     
-    fig, ax = plt.subplots()  # Create a figure and an axes object
-    sns.lineplot(data=visualization_df, x="generation", y="share", hue="ext_trait", 
-                        marker='o', palette=COLOR_DICT, markeredgewidth=0, ax=ax)  # Pass ax to seaborn
+    fig, axes = plt.subplots(1, 2, figsize=(8, 5))
+    axes = axes.flatten()
 
-    ax.set_xlabel("Generation")  # Set labels on the axes, not on the figure
-    ax.set_ylabel("Share of Population")
-    ax.legend(title=None)  # Remove legend title
+    sns.lineplot(data=learn_df, x="learning_step", y="share", hue="behavior", 
+                        marker='o', ax=axes[0], palette=COLOR_DICT, markeredgewidth=0)
+    sns.lineplot(data=nat_df, x="generation", y="share", hue="ext_trait", 
+                        marker='o', ax=axes[1], palette=COLOR_DICT, markeredgewidth=0)  # Pass ax to seaborn
 
+
+    axes[0].set_xlabel("Learning Cycle")
+    axes[0].set_ylabel("Share of Population")
+    axes[1].set_xlabel("Generational Cycle")  # Set labels on the axes, not on the figure
+    axes[1].set_ylabel("Share of Population")
+
+    # Remove legends from individual plots
+    for ax in axes:
+        if hasattr(ax, 'get_legend') and ax.get_legend() is not None:
+            ax.get_legend().remove()
+
+
+    # Create custom legend elements
+    handles = []
+    for behavior in BEHAVIORS:
+        # Line marker for line plots
+        line = Line2D([0], [0], color=COLOR_DICT[behavior], marker='o', linestyle='-', linewidth=2, markersize=6)
+        handles.append((line, behavior))
+    
+    for ext_trait in ["externalizers", "non-externalizers"]:
+        line = Line2D([0], [0], color=COLOR_DICT[ext_trait], marker='o', linestyle='-', linewidth=2, markersize=6)
+        handles.append((line, ext_trait))
+
+    # Combine them into a single legend
+    fig.legend(
+        handles=[h[0] for h in handles], 
+        labels=[h[1] for h in handles],
+        ncol=3,
+        bbox_to_anchor=(0.9, 0.18)
+    )
+
+    fig.tight_layout(pad=3.0)
+    plt.subplots_adjust(bottom=0.28)
 
     return fig
 
-def visualize_robustness(filename):
-    df = read_data(csvpath="/../data/"+filename)
+def visualize_robustness(df):
     
     max_gen = int(df.reset_index()["generation"].max())
     natural_selection_df = pd.DataFrame(columns=["generation", "ext_trait", "share"])
@@ -265,8 +333,8 @@ def visualize_robustness(filename):
     max_lst = int(df.reset_index()["learning_step"].max())
     max_gro = int(df.reset_index()["game_round"].max())
     learning_process_df = pd.DataFrame(columns=["learning_step", "behavior", "share"])
-    behaviors = ["alpha", "beta", "gamma", "delta"]
-    for behavior in behaviors:
+    BEHAVIORS = ["alpha", "beta", "gamma", "delta"]
+    for behavior in BEHAVIORS:
         for learning_step in range(max_lst+1):
             share = df.loc[(0, learning_step, max_gro, "shares"),
                                 pd.IndexSlice[:, behavior, :]].sum()
@@ -279,10 +347,10 @@ def visualize_robustness(filename):
     fig, axes = plt.subplots(1, 2, figsize=(8.5, 5))
     axes = axes.flatten()
 
-    axes[0].set_ylabel("Share")
-    axes[0].set_xlabel("Learning Step of First Generation")
-    axes[1].set_ylabel("Share")
-    axes[1].set_xlabel("Generation")
+    axes[0].set_ylabel("Share of Population")
+    axes[0].set_xlabel("Learning Cycle")
+    axes[1].set_ylabel("Share of Population")
+    axes[1].set_xlabel("Generational Cycle")
 
     sns.lineplot(data=learning_process_df, x="learning_step", y="share", hue="behavior", 
                         marker='o', palette=COLOR_DICT, markeredgewidth=0, ax=axes[0])
@@ -296,7 +364,7 @@ def visualize_robustness(filename):
 
     # Create custom legend elements
     handles = []
-    for behavior in behaviors:
+    for behavior in BEHAVIORS:
         # Line marker for line plots
         line = Line2D([0], [0], color=COLOR_DICT[behavior], marker='o', linestyle='-', linewidth=2, markersize=6)
 
@@ -325,34 +393,60 @@ if __name__ == "__main__":
     file_dir = os.path.dirname(os.path.realpath(__file__))
 
     fig1 = visualize_interaction_process(
+        df = read_data(csvpath="/../data/base_model_simulation.csv"),
         generation=0,
         learning_step=0
     )
     fig1.savefig(file_dir+"/../plots/fig1.png")
 
     fig2 = visualize_learning_process(
+        df = read_data(csvpath="/../data/base_model_simulation.csv"),
         generation=0
     )
     fig2.savefig(file_dir+"/../plots/fig2.png")
 
-    fig3 = visualize_natural_selection_process()
+    fig3 = visualize_learning_process_explanation(
+        df = read_data(csvpath="/../data/base_model_simulation.csv"),
+        generation=0
+    )
     fig3.savefig(file_dir+"/../plots/fig3.png")
 
-    fig4 = visualize_robustness(filename="stag_hunt_simulation.csv")
+    fig4 = visualize_natural_selection_process(
+        df = read_data(csvpath="/../data/base_model_simulation.csv")
+    )
     fig4.savefig(file_dir+"/../plots/fig4.png")
 
-    fig5 = visualize_robustness(filename="hawk_dove_simulation.csv")
+    # # fig4 = visualize_robustness(
+    # #     df = read_data(csvpath="/../data/gro_1_simulation.csv")
+    # # )
+    # # fig4.savefig(file_dir+"/../plots/fig4.png")
+
+    # fig5 = visualize_robustness(df = read_data(csvpath="/../data/gro_10_simulation.csv"))
+    # fig5.savefig(file_dir+"/../plots/fig4.png")
+
+    # fig6 = visualize_robustness(df = read_data(csvpath="/../data/gro_11_simulation.csv"))
+    # fig6.savefig(file_dir+"/../plots/fig5.png")
+
+    fig5 = visualize_robustness(df = read_data(csvpath="/../data/lst_2_simulation.csv"))
     fig5.savefig(file_dir+"/../plots/fig5.png")
 
-    fig6 = visualize_robustness(filename="lst_2_simulation.csv")
-    fig6.savefig(file_dir+"/../plots/fig6.png")
+    # fig7 = visualize_robustness(
+    #     df = read_data(csvpath="/../data/stag_hunt_simulation.csv")
+    # )
+    # fig7.savefig(file_dir+"/../plots/fig7.png")
 
-    fig7 = visualize_robustness(filename="gro_11_simulation.csv")
-    fig7.savefig(file_dir+"/../plots/fig7.png")
+    # fig8 = visualize_robustness(df = read_data(csvpath="/../data/hawk_dove_simulation.csv"))
+    # fig8.savefig(file_dir+"/../plots/fig8.png")
 
-    fig8 = visualize_robustness(filename="gro_10_simulation.csv")
-    fig8.savefig(file_dir+"/../plots/fig8.png")
-
-    # fig9 = visualize_robustness(filename="gro_5_simulation.csv")
+    # fig9 = visualize_robustness(df = read_data(csvpath="/../data/pd_5310_simulation.csv"))
     # fig9.savefig(file_dir+"/../plots/fig9.png")
+
+    # fig9 = visualize_robustness(df = read_data(csvpath="/../data/gro_2_hd_simulation.csv"))
+    # fig9.savefig(file_dir+"/../plots/fig10.png")
+
+    # fig10 = visualize_robustness(df = read_data(csvpath="/../data/gro_8_initext_70_custom_simulation.csv"))
+    # fig10.savefig(file_dir+"/../plots/fig10.png")
+
+    # fig11 = visualize_robustness(df = read_data(csvpath="/../data/gro_8_addext_70_custom_simulation.csv"))
+    # fig11.savefig(file_dir+"/../plots/fig11.png")
 

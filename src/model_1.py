@@ -5,14 +5,17 @@ import os
 MODEL_PARAMS = {
     'cc': 2,                        # payoff for c vs. c ("reward")
     'dc': 3,                        # payoff for d vs. c ("temptation")
-    'cd': 0,                        # payoff for c vs. d ("sucker")
-    'dd': 1,                        # payoff for d vs. d ("punishment")
+    'cd': 1,                        # payoff for c vs. d ("sucker")
+    'dd': 0,                        # payoff for d vs. d ("punishment")
     'replication_k': 10,            # selection strength
     'learning_steps': 15,           # number of learning steps
-    'game_rounds': 15,              # number of game rounds
-    'initial_externalizers': 0.01,  # initial share of externalizers
+    'game_rounds': 2,              # number of game rounds
+    'initial_externalizers': 0.01,     # initial share of externalizers
+    'additional_ext_profiles': 0, # non-externalizers that are alpha or delta
     'generations': 100              # number of generations
 }
+
+FILE_EXTENSION = "gro_2_hd_simulation.csv"
 
 BEHAVIORS = {
     "externalizing": ["alpha", "delta"],
@@ -22,6 +25,7 @@ BEHAVIORS = {
 # Initialize the dataframe to store the simulation data in
 def initialize_dataframe():
     init_ext = MODEL_PARAMS['initial_externalizers']
+    add_ext = MODEL_PARAMS['additional_ext_profiles']
     initial_data = {
         ("generation", "", ""): [0],
         ("learning_step", "", ""): [0],
@@ -32,13 +36,13 @@ def initialize_dataframe():
         ("externalizing", "delta", "matched"): [0],
         ("externalizing", "delta", "unmatched"): [init_ext/2],
         ("non-externalizing", "alpha", "matched"): [0],
-        ("non-externalizing", "alpha", "unmatched"): [(1-init_ext)/4],
+        ("non-externalizing", "alpha", "unmatched"): [(1-init_ext-add_ext)/4 + add_ext/2],
         ("non-externalizing", "beta", "matched"): [0],
-        ("non-externalizing", "beta", "unmatched"): [(1-init_ext)/4],
+        ("non-externalizing", "beta", "unmatched"): [(1-init_ext-add_ext)/4],
         ("non-externalizing", "gamma", "matched"): [0],
-        ("non-externalizing", "gamma", "unmatched"): [(1-init_ext)/4],
+        ("non-externalizing", "gamma", "unmatched"): [(1-init_ext-add_ext)/4],
         ("non-externalizing", "delta", "matched"): [0],
-        ("non-externalizing", "delta", "unmatched"): [(1-init_ext)/4]
+        ("non-externalizing", "delta", "unmatched"): [(1-init_ext-add_ext)/4 + add_ext/2]
     }
     simulation_df = pd.DataFrame(initial_data)
     simulation_df = simulation_df.set_index(["generation", "learning_step", "game_round", "metric"])
@@ -253,4 +257,4 @@ def run_simulation():
 if __name__ == "__main__":
     simulation_df = run_simulation()
     file_dir = os.path.dirname(os.path.realpath(__file__))
-    simulation_df.to_csv(file_dir + "/../data/base_model_simulation.csv")
+    simulation_df.to_csv(file_dir + "/../data/" + FILE_EXTENSION)
