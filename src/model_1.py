@@ -3,19 +3,19 @@ import numpy as np
 import os
 
 MODEL_PARAMS = {
-    'cc': 2,                        # payoff for c vs. c ("reward")
-    'dc': 3,                        # payoff for d vs. c ("temptation")
-    'cd': 1,                        # payoff for c vs. d ("sucker")
-    'dd': 0,                        # payoff for d vs. d ("punishment")
+    'cc': 5,                        # payoff for c vs. c ("reward")
+    'dc': 9,                        # payoff for d vs. c ("temptation")
+    'cd': 0,                        # payoff for c vs. d ("sucker")
+    'dd': 4,                        # payoff for d vs. d ("punishment")
     'replication_k': 10,            # selection strength
     'learning_steps': 15,           # number of learning steps
-    'game_rounds': 2,              # number of game rounds
-    'initial_externalizers': 0.01,     # initial share of externalizers
-    'additional_ext_profiles': 0, # non-externalizers that are alpha or delta
-    'generations': 100              # number of generations
+    'game_rounds': 15,              # number of game rounds
+    'initial_externalizers': 1,     # initial share of externalizers
+    'additional_ext_profiles': 0,   # non-externalizers that are alpha or delta
+    'generations': 1                # number of generations
 }
 
-FILE_EXTENSION = "gro_2_hd_simulation.csv"
+FILE_EXTENSION = "high_tempt_PD_externalizing_population.csv"
 
 BEHAVIORS = {
     "externalizing": ["alpha", "delta"],

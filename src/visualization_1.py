@@ -21,10 +21,11 @@ COLOR_DICT = {
     "beta": "red", 
     "gamma": "dodgerblue",
     "delta": "orange",
-    "externalizers": "darkblue",
-    "non-externalizers": "purple"
+    "externalizing": "darkblue",
+    "non-externalizing": "purple"
 }
 BEHAVIORS = ["alpha", "delta", "beta", "gamma"]
+EXT_TRAITS = ["externalizing", "non-externalizing"]
 
 def read_data(csvpath):
     # Read the file
@@ -108,7 +109,7 @@ def prepare_dfs_for_learning_process(df, generation=0):
     
     payoff_ext_df = pd.DataFrame(columns=["learning_step", "ext_trait", "payoff_accumulated"])
     payoff_ext_df = payoff_ext_df.set_index(["learning_step","ext_trait"])
-    for ext_trait in ["externalizers", "non-externalizers"]:
+    for ext_trait in EXT_TRAITS:
         for learning_step in range(15):
             payoff_ext_df.loc[(learning_step, ext_trait), "payoff_accumulated"] = 0
     
@@ -155,8 +156,8 @@ def prepare_dfs_for_learning_process(df, generation=0):
                 learning_step, behavior, share, share_among_ext, share_among_non_ext, end_of_step_matched, accumulated_payoff
             ]
 
-            payoff_ext_df.loc[(learning_step, "externalizers")] += end_of_step_payoff*share_among_ext
-            payoff_ext_df.loc[(learning_step, "non-externalizers")] += end_of_step_payoff*share_among_non_ext
+            payoff_ext_df.loc[(learning_step, "externalizing")] += end_of_step_payoff*share_among_ext
+            payoff_ext_df.loc[(learning_step, "non-externalizing")] += end_of_step_payoff*share_among_non_ext
     return payoff_ext_df, visualization_df
 
 def visualize_learning_process(df, generation=0):
@@ -244,7 +245,7 @@ def visualize_learning_process_explanation(df, generation=0):
         line = Line2D([0], [0], color=COLOR_DICT[behavior], marker='o', linestyle='-', linewidth=2, markersize=6)
         handles.append((line, behavior))
     
-    for ext_trait in ["externalizers", "non-externalizers"]:
+    for ext_trait in EXT_TRAITS:
         line = Line2D([0], [0], color=COLOR_DICT[ext_trait], marker='o', linestyle='-', linewidth=2, markersize=6)
         handles.append((line, ext_trait))
 
@@ -267,12 +268,11 @@ def visualize_natural_selection_process(df):
     payoff_ext_df, learn_df = prepare_dfs_for_learning_process(df, generation=10)
 
     nat_df = pd.DataFrame(columns=["generation", "ext_trait", "share"])
-    ext_traits = ["externalizing", "non-externalizing"]
 
-    for ext in ext_traits:
+    for ext_trait in EXT_TRAITS:
         for generation in range(30):
-            share = df.loc[(generation, 0, 0, "shares"), pd.IndexSlice[ext, :, :]].sum()
-            nat_df.loc[len(nat_df)] = [generation, ext.replace("ing", "ers"), share]
+            share = df.loc[(generation, 0, 0, "shares"), pd.IndexSlice[ext_trait, :, :]].sum()
+            nat_df.loc[len(nat_df)] = [generation, ext_trait, share]
 
     sns.set_style("whitegrid")
     
@@ -303,7 +303,7 @@ def visualize_natural_selection_process(df):
         line = Line2D([0], [0], color=COLOR_DICT[behavior], marker='o', linestyle='-', linewidth=2, markersize=6)
         handles.append((line, behavior))
     
-    for ext_trait in ["externalizers", "non-externalizers"]:
+    for ext_trait in EXT_TRAITS:
         line = Line2D([0], [0], color=COLOR_DICT[ext_trait], marker='o', linestyle='-', linewidth=2, markersize=6)
         handles.append((line, ext_trait))
 
@@ -324,8 +324,7 @@ def visualize_robustness(df):
     
     max_gen = int(df.reset_index()["generation"].max())
     natural_selection_df = pd.DataFrame(columns=["generation", "ext_trait", "share"])
-    ext_traits = ["externalizing", "non-externalizing"]
-    for ext in ext_traits:
+    for ext in EXT_TRAITS:
         for generation in range(max_gen+1):
             share = df.loc[(generation, 0, 0, "shares"), pd.IndexSlice[ext, :, :]].sum()
             natural_selection_df.loc[len(natural_selection_df)] = [generation, ext.replace("ing", "ers"), share]
@@ -333,7 +332,6 @@ def visualize_robustness(df):
     max_lst = int(df.reset_index()["learning_step"].max())
     max_gro = int(df.reset_index()["game_round"].max())
     learning_process_df = pd.DataFrame(columns=["learning_step", "behavior", "share"])
-    BEHAVIORS = ["alpha", "beta", "gamma", "delta"]
     for behavior in BEHAVIORS:
         for learning_step in range(max_lst+1):
             share = df.loc[(0, learning_step, max_gro, "shares"),
@@ -370,7 +368,7 @@ def visualize_robustness(df):
 
         handles.append((line, behavior))
     
-    for ext_trait in ["externalizers", "non-externalizers"]:
+    for ext_trait in EXT_TRAITS:
         line = Line2D([0], [0], color=COLOR_DICT[ext_trait], marker='o', linestyle='-', linewidth=2, markersize=6)
         handles.append((line, ext_trait))
 
@@ -379,6 +377,63 @@ def visualize_robustness(df):
         handles=[h[0] for h in handles], 
         labels=[h[1] for h in handles],
         ncol=3,
+        bbox_to_anchor=(0.8, 0.2)
+    )
+
+    fig.tight_layout(pad=3.0)
+    plt.subplots_adjust(bottom=0.3)
+
+    return fig
+
+def visualize_two_learning_processes(df1, df2, title_left, title_right):
+
+    learning_process_df1 = pd.DataFrame(columns=["learning_step", "behavior", "share"])
+    learning_process_df2 = pd.DataFrame(columns=["learning_step", "behavior", "share"])
+    for df, learning_process_df in [(df1, learning_process_df1), (df2, learning_process_df2)]:
+        max_lst = int(df.reset_index()["learning_step"].max())
+        max_gro = int(df.reset_index()["game_round"].max())
+        for behavior in BEHAVIORS:
+            for learning_step in range(max_lst+1):
+                share = df.loc[(0, learning_step, max_gro, "shares"),
+                                    pd.IndexSlice[:, behavior, :]].sum()
+                learning_process_df.loc[len(learning_process_df)] = [
+                    learning_step, behavior, share
+                ]
+
+    sns.set_style("whitegrid")
+    
+    fig, axes = plt.subplots(1, 2, figsize=(8.5, 5))
+    axes = axes.flatten()
+
+    axes[0].set_ylabel("Share of Population")
+    axes[0].set_xlabel("Learning Cycle")
+    axes[0].set_title(title_left)
+    axes[1].set_ylabel("Share of Population")
+    axes[1].set_xlabel("Learning Cycle")
+    axes[1].set_title(title_right)
+
+    sns.lineplot(data=learning_process_df1, x="learning_step", y="share", hue="behavior", 
+                        marker='o', palette=COLOR_DICT, markeredgewidth=0, ax=axes[0])
+    sns.lineplot(data=learning_process_df2, x="learning_step", y="share", hue="behavior", 
+                        marker='o', palette=COLOR_DICT, markeredgewidth=0, ax=axes[1])  # Pass ax to seaborn
+
+    # Remove legends from individual plots
+    for ax in axes:
+        if hasattr(ax, 'get_legend') and ax.get_legend() is not None:
+            ax.get_legend().remove()
+
+    # Create custom legend elements
+    handles = []
+    for behavior in BEHAVIORS:
+        # Line marker for line plots
+        line = Line2D([0], [0], color=COLOR_DICT[behavior], marker='o', linestyle='-', linewidth=2, markersize=6)
+        handles.append((line, behavior))
+
+    # Combine them into a single legend
+    fig.legend(
+        handles=[h[0] for h in handles], 
+        labels=[h[1] for h in handles],
+        ncol=4,
         bbox_to_anchor=(0.8, 0.2)
     )
 
@@ -416,6 +471,22 @@ if __name__ == "__main__":
     )
     fig4.savefig(file_dir+"/../plots/fig4.png")
 
+    fig5 = visualize_two_learning_processes(
+        df1 = read_data(csvpath="/../data/PD_gro4_externalizing_population.csv"),
+        df2 = read_data(csvpath="/../data/PD_gro4_non_externalizing_population.csv"),
+        title_left="Externalizing Population",
+        title_right="Non-Externalizing Population"
+    )
+    fig5.savefig(file_dir+"/../plots/fig5.png")
+
+    fig6 = visualize_two_learning_processes(
+        df1 = read_data(csvpath="/../data/high_tempt_PD_externalizing_population.csv"),
+        df2 = read_data(csvpath="/../data/high_tempt_PD_non_externalizing_population.csv"),
+        title_left="Externalizing Population",
+        title_right="Non-Externalizing Population"
+    )
+    fig6.savefig(file_dir+"/../plots/fig6.png")
+
     # # fig4 = visualize_robustness(
     # #     df = read_data(csvpath="/../data/gro_1_simulation.csv")
     # # )
@@ -427,8 +498,8 @@ if __name__ == "__main__":
     # fig6 = visualize_robustness(df = read_data(csvpath="/../data/gro_11_simulation.csv"))
     # fig6.savefig(file_dir+"/../plots/fig5.png")
 
-    fig5 = visualize_robustness(df = read_data(csvpath="/../data/lst_2_simulation.csv"))
-    fig5.savefig(file_dir+"/../plots/fig5.png")
+    # fig5 = visualize_robustness(df = read_data(csvpath="/../data/lst_2_simulation.csv"))
+    # fig5.savefig(file_dir+"/../plots/fig5.png")
 
     # fig7 = visualize_robustness(
     #     df = read_data(csvpath="/../data/stag_hunt_simulation.csv")

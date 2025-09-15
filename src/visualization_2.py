@@ -6,6 +6,7 @@ from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import os
 import model_2
+import re
 
 plt.rcParams.update({
     'font.size': 16,  # Base font size
@@ -51,6 +52,97 @@ def read_data(csvpath="/../data/ABM_base_simulation.csv"):
 
     return df
 
+def extract_baseabm_list_from_significance_results():
+    file_dir = os.path.dirname(os.path.realpath(__file__))
+    with open(file_dir+"/../data/significance_test_results.txt", 'r') as file:
+        content = file.read()
+    
+    # Find the benchmark results line (the longer list)
+    benchmark_pattern = r'Benchmark results:\s*\[([^\]]+)\]'
+    match = re.search(benchmark_pattern, content)
+    
+    # Extract the numbers string and split by comma
+    numbers_str = match.group(1)
+    # Convert to list of integers
+    numbers_list = [int(x.strip()) for x in numbers_str.split(',')]
+    return numbers_list
+
+def visualize_base_result_vs_fitness_irrelevant(filename):
+    df = read_data(csvpath="/../data/"+filename)
+    
+    max_sim = int(df.reset_index()["simulation"].max())
+    final_ext = []
+    for simulation in range(max_sim+1):
+        max_gen_in_sim = int(df.loc[pd.IndexSlice[simulation, :, :]].reset_index()["generation"].max())
+        number_ext = df.loc[(simulation, max_gen_in_sim, 0), pd.IndexSlice[:, "externalization"]].sum()
+        final_ext.append(number_ext)
+    
+    final_trait_a = extract_baseabm_list_from_significance_results()
+
+    max_lst = int(df.reset_index()["learning_step"].max())
+    learning_process_df = pd.DataFrame(columns=["learning_step", "behavior", "mean", "97.5", "2.5"])
+    behaviors = ["alpha", "beta", "gamma", "delta"]
+    for behavior in behaviors:
+        for learning_step in range(max_lst+1):
+            list_dict = {key: [] for key in behaviors}
+            for simulation in range(max_sim+1):
+                for key in behaviors:
+                    list_dict[key].append((df.loc[(simulation, 0, learning_step), pd.IndexSlice[:, "behavior"]] == key).sum())
+            for key in behaviors:
+                learning_process_df.loc[len(learning_process_df)] = [
+                    learning_step, key, pd.Series(list_dict[key]).mean(), pd.Series(list_dict[key]).quantile(0.975), pd.Series(list_dict[key]).quantile(0.025)
+                ]
+
+    sns.set_style("whitegrid")
+    
+    fig, axes = plt.subplots(1, 3, figsize=(12, 5))
+    axes = axes.flatten()
+
+    axes[0].set_ylabel("Number of Agents")
+    axes[0].set_xlabel("Learning Cycle")
+    axes[1].set_ylabel("Number of Simulations")
+    axes[1].set_xlabel("Final Externalizers")
+    axes[2].set_ylabel("Number of Simulations")
+    axes[2].set_xlabel("Final Trait A Agents")
+
+    sns.lineplot(data=learning_process_df, x="learning_step", y="mean", hue="behavior", 
+                        marker='o', palette=COLOR_DICT, markeredgewidth=0, ax=axes[0])
+    sns.lineplot(data=learning_process_df, x="learning_step", y="97.5", hue="behavior",
+                        linestyle='--', palette=COLOR_DICT, markeredgewidth=0, ax=axes[0])
+    sns.lineplot(data=learning_process_df, x="learning_step", y="2.5", hue="behavior",
+                        linestyle='--', palette=COLOR_DICT, markeredgewidth=0, ax=axes[0])
+    sns.histplot(x=pd.Series(final_ext), stat="count", bins=10, ax=axes[1], color="gray", kde=False)
+    sns.histplot(x=pd.Series(final_trait_a), stat="count", bins=10, ax=axes[2], color="gray", kde=False)
+
+    # Remove legends from individual plots
+    for ax in axes:
+        if hasattr(ax, 'get_legend') and ax.get_legend() is not None:
+            ax.get_legend().remove()
+
+    # Create custom legend elements
+    handles = []
+    for behavior in behaviors:
+        # Line marker for line plots
+        line1 = Line2D([0], [0], color=COLOR_DICT[behavior], marker='o', linestyle='-', linewidth=2, markersize=6)
+        line2 = Line2D([0], [0], color=COLOR_DICT[behavior], marker=None, linestyle='--', linewidth=2, markersize=6)
+
+        handles.append((line1, f"{behavior} (mean)"))
+        handles.append((line2, f"{behavior} (95% CI)"))
+
+    # Combine them into a single legend
+    fig.legend(
+        handles=[h[0] for h in handles], 
+        labels=[h[1] for h in handles],
+        ncol=2,
+        # bbox_to_anchor=(0.6, 0.2)
+        bbox_to_anchor=(0.7, 0.3)
+    )
+
+    fig.tight_layout(pad=3.0)
+    plt.subplots_adjust(bottom=0.4)
+
+    return fig
+
 def visualize_robustness(filename):
     df = read_data(csvpath="/../data/"+filename)
     
@@ -93,7 +185,7 @@ def visualize_robustness(filename):
                         linestyle='--', palette=COLOR_DICT, markeredgewidth=0, ax=axes[0])
     sns.lineplot(data=learning_process_df, x="learning_step", y="2.5", hue="behavior",
                         linestyle='--', palette=COLOR_DICT, markeredgewidth=0, ax=axes[0])
-    sns.histplot(x=pd.Series(final_ext), stat="count", bins=20, ax=axes[1], color="gray", kde=False)
+    sns.histplot(x=pd.Series(final_ext), stat="count", bins=10, ax=axes[1], color="gray", kde=False)
 
     # Remove legends from individual plots
     for ax in axes:
@@ -129,17 +221,17 @@ def visualize_robustness(filename):
 if __name__ == "__main__":
     file_dir = os.path.dirname(os.path.realpath(__file__))
 
-    fig6 = visualize_robustness("ABM_base_simulation.csv")
-    fig6.savefig(file_dir+"/../plots/fig6.png")
-
-    fig7 = visualize_robustness("ABM_mixed_learning_mechanism_simulation.csv")
+    fig7 = visualize_base_result_vs_fitness_irrelevant("ABM_base_simulation.csv")
     fig7.savefig(file_dir+"/../plots/fig7.png")
 
-    fig8 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_HD.csv")
+    fig8 = visualize_robustness("ABM_mixed_learning_mechanism_simulation.csv")
     fig8.savefig(file_dir+"/../plots/fig8.png")
 
-    fig9 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_SH.csv")
-    fig9.savefig(file_dir+"/../plots/fig9.png")
+    # fig8 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_HD.csv")
+    # fig8.savefig(file_dir+"/../plots/fig8.png")
 
-    fig10 = visualize_robustness("ABM_pop_size_12_simulation.csv")
-    fig10.savefig(file_dir+"/../plots/fig10.png")
+    # fig9 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_SH.csv")
+    # fig9.savefig(file_dir+"/../plots/fig9.png")
+
+    fig9 = visualize_robustness("ABM_pop_size_12_simulation.csv")
+    fig9.savefig(file_dir+"/../plots/fig9.png")
