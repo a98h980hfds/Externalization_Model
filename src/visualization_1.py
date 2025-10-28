@@ -262,7 +262,7 @@ if __name__ == "__main__":
     # FIG 3: Natural Selection Process
     df = read_data("/../data/base_model_simulation.csv")
     panels = {
-        "Learning Process": {"type": "learning_process", "params": {"df": df, "generation": 12}},
+        "Learning Process\nGeneration 12": {"type": "learning_process", "params": {"df": df, "generation": 12}},
         "Natural Selection Process": {"type": "natural_selection", "params": {"df": df}},
     }
     fig = visualize_master(panels)

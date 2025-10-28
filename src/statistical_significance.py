@@ -206,10 +206,10 @@ if __name__ == "__main__":
     benchmark12 = simulate_benchmark(sample_size=1000, pop_size=12)
     benchmark8 = simulate_benchmark(sample_size=1000, pop_size=8)
     
-    export_txt = "Significance Test Results Base ABM:\n"
+    export_txt = "Significance Test Results population size 100:\n"
     export_txt += test_for_significance("ABM_base_simulation.csv", pop_size=100, benchmark=benchmark100)
     
-    export_txt += "\nSignificance Test Results for mixed learning mechanism:\n"
+    export_txt += "\nSignificance Test Results population size 100 mixed:\n"
     export_txt += test_for_significance("ABM_mixed_learning_mechanism_simulation.csv", pop_size=100, benchmark=benchmark100)
     
     export_txt += "\nSignificance Test Results population size 12:\n"
