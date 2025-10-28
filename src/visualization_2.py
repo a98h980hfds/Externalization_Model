@@ -125,17 +125,20 @@ def plot_shared(learning_df, final_ext, final_A, max_hist, binwidth, ncols):
     sns.lineplot(data=learning_df, x="learning_step", y="2.5",
                  hue="behavior", linestyle='--', palette=COLOR_DICT,
                  markeredgewidth=0, ax=axes[0])
+    axes[0].set_title("Learning Proccess\n(100 simulations aggregate)")
 
     axes[1].set_ylabel("Number of Simulations")
     axes[1].set_xlabel("Final Externalizers")
     sns.histplot(x=pd.Series(final_ext), stat="count", binwidth=binwidth, color="gray", kde=False, ax=axes[1])
     axes[1].set_xlim(0, max_hist)
+    axes[1].set_title("Externalization\nSimulation Results")
 
     if final_A:
         axes[2].set_ylabel("Number of Simulations")
         axes[2].set_xlabel("Final Trait A Agents")
         sns.histplot(x=pd.Series(final_A), stat="count", binwidth=binwidth, color="gray", kde=False, ax=axes[2])
         axes[2].set_xlim(0, max_hist)
+        axes[2].set_title("Irrelevant Trait A\nSimulation Results")
 
     for ax in axes:
         if ax.get_legend() is not None:
@@ -153,7 +156,7 @@ def plot_shared(learning_df, final_ext, final_A, max_hist, binwidth, ncols):
 
     legend_placement = (0.7, 0.3) if ncols==3 else (1.0, 0.3)
     fig.legend(handles=handles, labels=labels, ncol=2, bbox_to_anchor=legend_placement)
-    fig.tight_layout(pad=3.0)
+    fig.tight_layout(pad=1.0)
     plt.subplots_adjust(bottom=0.4)
     return fig
 
