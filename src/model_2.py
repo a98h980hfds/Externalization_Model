@@ -11,7 +11,7 @@ MODEL_PARAMS = {
     'learning_steps': 15,            # number of learning steps
     "learning_mechanism": "mixed", # "success", or "mixed" for succes-, frequency-, and source-based
     'game_rounds': 15,               # number of game rounds
-    'pop_size': 12,                  # population size
+    'pop_size': 8,                  # population size
     'initial_externalizers': 1,     # initial share of externalizers
     'generations': 50               # number of generations
 }
@@ -247,4 +247,4 @@ if __name__ == "__main__":
         results_df = pd.concat([results_df, run_simulation(i)], axis=0)
 
     file_dir = os.path.dirname(os.path.realpath(__file__))
-    results_df.to_csv(file_dir + "/../data/ABM_pop_size_12_mixed_learning_simulation.csv")
+    results_df.to_csv(file_dir + "/../data/ABM_pop_size_8_mixed_learning_simulation.csv")

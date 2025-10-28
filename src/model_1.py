@@ -8,14 +8,14 @@ MODEL_PARAMS = {
     'cd': 0,                        # payoff for c vs. d ("sucker")
     'dd': 1,                        # payoff for d vs. d ("punishment")
     'replication_k': 10,            # selection strength
-    'learning_steps': 3,           # number of learning steps
-    'game_rounds': 10,              # number of game rounds
-    'initial_externalizers': 0.01,  # initial share of externalizers
+    'learning_steps': 15,           # number of learning steps
+    'game_rounds': 4,              # number of game rounds
+    'initial_externalizers': 0.99,  # initial share of externalizers
     'additional_ext_profiles': 0,   # non-externalizers that are alpha or delta
-    'generations': 30                # number of generations
+    'generations': 50                # number of generations
 }
 
-FILE_EXTENSION = "PD_3201_lst3_simulation.csv"
+FILE_EXTENSION = "test_right_basin_gro4.csv"
 
 BEHAVIORS = {
     "externalizing": ["alpha", "delta"],

@@ -221,17 +221,11 @@ def visualize_robustness(filename):
 if __name__ == "__main__":
     file_dir = os.path.dirname(os.path.realpath(__file__))
 
-    fig7 = visualize_base_result_vs_fitness_irrelevant("ABM_base_simulation.csv")
+    fig6 = visualize_base_result_vs_fitness_irrelevant("ABM_base_simulation.csv")
+    fig6.savefig(file_dir+"/../plots/fig6.png")
+
+    fig7 = visualize_robustness("ABM_mixed_learning_mechanism_simulation.csv")
     fig7.savefig(file_dir+"/../plots/fig7.png")
 
-    fig8 = visualize_robustness("ABM_mixed_learning_mechanism_simulation.csv")
+    fig8 = visualize_robustness("ABM_pop_size_12_simulation.csv")
     fig8.savefig(file_dir+"/../plots/fig8.png")
-
-    # fig8 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_HD.csv")
-    # fig8.savefig(file_dir+"/../plots/fig8.png")
-
-    # fig9 = visualize_robustness("ABM_mixed_learning_mechanism_simulation_SH.csv")
-    # fig9.savefig(file_dir+"/../plots/fig9.png")
-
-    fig9 = visualize_robustness("ABM_pop_size_12_simulation.csv")
-    fig9.savefig(file_dir+"/../plots/fig9.png")

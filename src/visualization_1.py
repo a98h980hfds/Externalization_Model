@@ -170,7 +170,7 @@ def panel_end_of_lst_partnered(df, generation=0, ax=None):
     ax.set_ylabel("End-of-Step Partnered Share")
     return ax
 
-def visualize_master(df, panel_configs):
+def visualize_master(panel_configs):
     """
     panel_configs: dict of {panel_name: {"type": str, "params": dict}}
     panel types:
@@ -196,7 +196,7 @@ def visualize_master(df, panel_configs):
     for ax, (key, config) in zip(axes, panel_configs.items()):
         ftype = config["type"]
         params = config.get("params", {})
-        panel_functions[ftype](df=df, ax=ax, **params)
+        panel_functions[ftype](ax=ax, **params)
         ax.set_title(key)
         if ax.get_legend():
             ax.get_legend().remove()
@@ -244,33 +244,46 @@ if __name__ == "__main__":
     # FIG 1: Interaction Process
     df = read_data("/../data/base_model_simulation.csv")
     panels = {
-        "Partnered Share": {"type": "partnered_share", "params": {"generation": 0, "learning_step": 0}},
-        "Accumulated Payoff": {"type": "accumulated_payoff", "params": {"generation": 0, "learning_step": 0}},
+        "Partnered Share": {"type": "partnered_share", "params": {"df": df, "generation": 0, "learning_step": 0}},
+        "Accumulated Payoff": {"type": "accumulated_payoff", "params": {"df": df, "generation": 0, "learning_step": 0}},
     }
-    fig = visualize_master(df, panels)
+    fig = visualize_master(panels)
     fig.savefig("../plots/fig1.png")
 
     # FIG 2: Learning process
     df = read_data("/../data/base_model_simulation.csv")
     panels = {
-        "Learning Process": {"type": "learning_process", "params": {"generation": 0}},
-        "Partnered Share At\nEnd of Learning Step ": {"type": "end_of_lst_partnered", "params": {"generation": 0}}
+        "Learning Process": {"type": "learning_process", "params": {"df": df, "generation": 0}},
+        "Partnered Share At\nEnd of Learning Step ": {"type": "end_of_lst_partnered", "params": {"df": df, "generation": 0}}
     }
-    fig = visualize_master(df, panels)
+    fig = visualize_master(panels)
     fig.savefig("../plots/fig2.png")
 
-    # # FIG 1: Interaction Process
-    # df = read_data("/../data/base_model_simulation.csv")
-    # panels = {
-    #     "Partnered Share": {"type": "partnered_share", "params": {"generation": 0, "learning_step": 0}},
-    #     "Accumulated Payoff": {"type": "accumulated_payoff", "params": {"generation": 0, "learning_step": 0}},
-    # }
-    # fig = visualize_master(df, panels)
-    # fig.savefig("fig1.png")
+    # FIG 3: Natural Selection Process
+    df = read_data("/../data/base_model_simulation.csv")
+    panels = {
+        "Learning Process": {"type": "learning_process", "params": {"df": df, "generation": 12}},
+        "Natural Selection Process": {"type": "natural_selection", "params": {"df": df}},
+    }
+    fig = visualize_master(panels)
+    fig.savefig("../plots/fig3.png")
 
-    # panels = {
-    #     "Partnered Share": {"type": "partnered_share", "params": {"generation": 0, "learning_step": 0}},
-    #     "Accumulated Payoff": {"type": "accumulated_payoff", "params": {"generation": 0, "learning_step": 0}},
-    #     "Learning Process": {"type": "learning_process", "params": {"generation": 0}},
-    #     "Natural Selection": {"type": "natural_selection", "params": {}}
-    # }
+    # FIG 4: Externalization necessary with 4 turns per learning cycle
+    df1 = read_data("/../data/PD_gro4_externalizing_population.csv")
+    df2 = read_data("/../data/PD_gro4_non_externalizing_population.csv")
+    panels = {
+        "Learning Process\nExternalizing Population": {"type": "learning_process", "params": {"df": df1, "generation": 0}},
+        "Learning Process\nNon-Externalizing Population": {"type": "learning_process", "params": {"df": df2, "generation": 0}},
+    }
+    fig = visualize_master(panels)
+    fig.savefig("../plots/fig4.png")
+
+    # FIG 5: Externalization necessary and adaptive for n_E=3
+    df = read_data("/../data/lst_3_simulation.csv")
+    panels = {
+        "Learning Process\nGeneration 1": {"type": "learning_process", "params": {"df": df, "generation": 0}},
+        "Natural Selection Process": {"type": "natural_selection", "params": {"df": df}},
+        "Learning Process\nGeneration 30": {"type": "learning_process", "params": {"df": df, "generation": 29}},
+    }
+    fig = visualize_master(panels)
+    fig.savefig("../plots/fig5.png")
