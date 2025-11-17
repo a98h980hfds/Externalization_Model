@@ -3,19 +3,19 @@ import numpy as np
 import os
 
 MODEL_PARAMS = {
-    'cc': 2,                        # payoff for c vs. c ("reward")
-    'dc': 3,                        # payoff for d vs. c ("temptation")
+    'cc': 6,                        # payoff for c vs. c ("reward")
+    'dc': 9,                        # payoff for d vs. c ("temptation")
     'cd': 0,                        # payoff for c vs. d ("sucker")
     'dd': 1,                        # payoff for d vs. d ("punishment")
     'replication_k': 10,            # selection strength
-    'learning_steps': 15,           # number of learning steps
-    'game_rounds': 4,              # number of game rounds
-    'initial_externalizers': 0.99,  # initial share of externalizers
+    'learning_steps': 3,           # number of learning steps
+    'game_rounds': 7,              # number of game rounds
+    'initial_externalizers': 0.01,  # initial share of externalizers
     'additional_ext_profiles': 0,   # non-externalizers that are alpha or delta
-    'generations': 50                # number of generations
+    'generations': 80               # number of generations
 }
 
-FILE_EXTENSION = "test_right_basin_gro4.csv"
+FILE_EXTENSION = "test_simulation.csv"
 
 BEHAVIORS = {
     "externalizing": ["alpha", "delta"],

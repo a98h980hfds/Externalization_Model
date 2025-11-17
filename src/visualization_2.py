@@ -130,6 +130,7 @@ def plot_shared(learning_df, final_ext, final_A, max_hist, binwidth, ncols):
     axes[1].set_ylabel("Number of Simulations")
     axes[1].set_xlabel("Final Externalizers")
     sns.histplot(x=pd.Series(final_ext), stat="count", binwidth=binwidth, color="gray", kde=False, ax=axes[1])
+    axes[1].set_ylim(0, 100)
     axes[1].set_xlim(0, max_hist)
     axes[1].set_title("Externalization\nSimulation Results")
 
@@ -137,6 +138,7 @@ def plot_shared(learning_df, final_ext, final_A, max_hist, binwidth, ncols):
         axes[2].set_ylabel("Number of Simulations")
         axes[2].set_xlabel("Final Trait A Agents")
         sns.histplot(x=pd.Series(final_A), stat="count", binwidth=binwidth, color="gray", kde=False, ax=axes[2])
+        axes[2].set_ylim(0, 100)
         axes[2].set_xlim(0, max_hist)
         axes[2].set_title("Irrelevant Trait A\nSimulation Results")
 

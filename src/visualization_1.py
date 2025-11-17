@@ -197,6 +197,8 @@ def visualize_master(panel_configs):
         ftype = config["type"]
         params = config.get("params", {})
         panel_functions[ftype](ax=ax, **params)
+        if not ftype == "accumulated_payoff":
+            ax.set_ylim(-0.1, 1.1)
         ax.set_title(key)
         if ax.get_legend():
             ax.get_legend().remove()
@@ -279,11 +281,11 @@ if __name__ == "__main__":
     fig.savefig("../plots/fig4.png")
 
     # FIG 5: Externalization necessary and adaptive for n_E=3
-    df = read_data("/../data/lst_3_simulation.csv")
+    df = read_data("/../data/lst_3_gro_7_9610_simulation.csv")
     panels = {
         "Learning Process\nGeneration 1": {"type": "learning_process", "params": {"df": df, "generation": 0}},
         "Natural Selection Process": {"type": "natural_selection", "params": {"df": df}},
-        "Learning Process\nGeneration 30": {"type": "learning_process", "params": {"df": df, "generation": 29}},
+        "Learning Process\nGeneration 60": {"type": "learning_process", "params": {"df": df, "generation": 59}},
     }
     fig = visualize_master(panels)
     fig.savefig("../plots/fig5.png")

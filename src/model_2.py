@@ -4,14 +4,14 @@ from random import sample, shuffle
 import os
 
 MODEL_PARAMS = {
-    'cc': 2,                        # payoff for c vs. c ("reward")
-    'dc': 3,                        # payoff for d vs. c ("temptation")
+    'cc': 6,                        # payoff for c vs. c ("reward")
+    'dc': 9,                        # payoff for d vs. c ("temptation")
     'cd': 0,                        # payoff for c vs. d ("sucker")
     'dd': 1,                        # payoff for d vs. d ("punishment")
-    'learning_steps': 15,            # number of learning steps
-    "learning_mechanism": "mixed", # "success", or "mixed" for succes-, frequency-, and source-based
-    'game_rounds': 15,               # number of game rounds
-    'pop_size': 8,                  # population size
+    'learning_steps': 3,            # number of learning steps
+    "learning_mechanism": "success", # "success", or "mixed" for succes-, frequency-, and source-based
+    'game_rounds': 7,               # number of game rounds
+    'pop_size': 100,                  # population size
     'initial_externalizers': 1,     # initial share of externalizers
     'generations': 50               # number of generations
 }
@@ -247,4 +247,4 @@ if __name__ == "__main__":
         results_df = pd.concat([results_df, run_simulation(i)], axis=0)
 
     file_dir = os.path.dirname(os.path.realpath(__file__))
-    results_df.to_csv(file_dir + "/../data/ABM_pop_size_8_mixed_learning_simulation.csv")
+    results_df.to_csv(file_dir + "/../data/ABM_lst_3_gro_7_9610.csv")
