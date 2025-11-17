@@ -1,0 +1,9 @@
+Comparison for 3 learning cycles, 7 turns, PD with 9 6 1 0
+{'ext': {'defective': 14.46, 'cooperative': 85.54}, 'non': {'defective': 64.45, 'cooperative': 35.55}}
+
+Comparison for mixed learning, 3 learning cycles, 7 turns, PD with 9 6 1 0
+{'ext': {'defective': 38.28, 'cooperative': 61.72}, 'non': {'defective': 54.56, 'cooperative': 45.44}}
+
+Comparison for population size 12, 3 learning cycles, 7 turns, PD with 9 6 1 0
+{'ext': {'defective': 4.17, 'cooperative': 7.83}, 'non': {'defective': 8.0, 'cooperative': 4.0}}
+
